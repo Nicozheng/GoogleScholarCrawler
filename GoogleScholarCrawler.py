@@ -83,19 +83,24 @@ class Article:
             print('creating folder {0}'.format(self.output_fpath))
 
     def getInfo(self, article, driver):
-        default = {"title": "NA", "author": "NA", "journal": "NA", "year":"NA", "log": "NA", "citation":"NA", "filename":"NA"}
+        default = {"title": "NA", "author": "NA", "journal": "NA", "year":"NA", "log": "NA", "citation":"NA"}
         default['title'] = article.find_element_by_class_name("gs_rt").text.lower()
         default['title'] = re.sub("[^a-z0-9 ]", "", default['title'])
         default['title'] = re.sub("pdf\ ", "", default['title'])
         infobox = article.find_element_by_class_name("gs_a").text
         default['author'], default['journal'], default['year'] = parse(infobox)
         default['citation'] = article.find_element_by_css_selector("div[class=gs_fl]").find_element_by_css_selector("a[href^='/scholar?cites']").text.split(" ")[-1]
-        default['filename'] = self.getFileName()
         return default
 
     def getPdf(self, article, driver):
-        tmp = article.find_element_by_css_selector("div[class=gs_or_ggsm")
-        pdf_link = tmp.find_element_by_tag_name("a").get_attribute("href")
+        pdf_link = "NA"
+        try:
+            tmp = article.find_element_by_css_selector("div[class=gs_or_ggsm")
+            pdf_link = tmp.find_element_by_tag_name("a").get_attribute("href")
+            if not pdf_link.endswith('.pdf'):
+                pdf_link = "NA"
+        except:
+            self.info['log'] = "pdf missing"
         return pdf_link
 
     def getFileName(self, alias=alias):
@@ -114,19 +119,16 @@ class Article:
         return filename
 
     def fit(self, article, driver, num):
-        default = {"title": "NA", "author": "NA", "journal": "NA", "year":"NA", "log": "NA", "citation":"NA", "filename":"NA"}
+        default = {"title": "NA", "author": "NA", "journal": "NA", "year":"NA", "log": "NA", "citation":"NA"}
         try:
             self.info = self.getInfo(article, driver)
         except:
             self.info = default
         if self.info is not default:
-            try:
-                self.pdf = self.getPdf(article, driver)
-            except:
-                self.info['log'] = "pdf missing"
-                self.pdf = "NA"
+            self.pdf = self.getPdf(article, driver)
             if self.pdf is not "NA":
                 self.filename = self.getFileName()
+                self.info['filename'] = self.filename
                 output = self.output_fpath + "/" + self.filename
                 try:
                     downloadPdf(output, self.pdf)
@@ -167,7 +169,7 @@ def run(keywords, journals, recursive = 6):
                     cnt += 1
                 try:
                     driver.find_element_by_css_selector("span[class=gs_ico\ gs_ico_nav_next]").click()
-                    time.sleep(5)
+                    time.sleep(3)
                 except:
                     break   # break the loop if can't find next page
             log = pd.DataFrame(articles.total_articles).T  # generate log files
