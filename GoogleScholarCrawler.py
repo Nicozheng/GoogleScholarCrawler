@@ -7,20 +7,22 @@ import subprocess
 import re
 import os
 import requests
+import sys
+import json
 
 author = "Nico Zheng"
 email = "nico921113[at]gmail.com"
 
-keywords = ["wikipedia"]  # search keywords
-journals = ['information systems research', 'mis quarterly', 'journal of management information systems',
-             'journal of the association for information systems', 'management science', 'operational research', 
-             'information & management', "decision support systems", "european journal of information systems"]
-fpath = "/Users/Nico/test/test_googlecrawer2"   # output file folder
+# keywords = ["online communities"]  # search keywords
+# journals = ['information systems research', 'mis quarterly', 'journal of management information systems',
+#              'journal of the association for information systems', 'management science', 'operational research',
+#              'information & management', "decision support systems", "european journal of information systems"]
+# fpath = "/Users/Nico/test/test_googlecrawer2"   # output file folder
+# chromedriver_path = ""  # modify this if you need to use local chromedriver
 
-alias = {'information systems research':"ISR", 'mis quarterly':'MISQ', 'journal of management information systems':"JMIS",'journal of the association for information systems':"JAIS", 'management science':'MS', 'operational research':"OR", 
+alias = {'information systems research':"ISR", 'mis quarterly':'MISQ', 'journal of management information systems':"JMIS",'journal of the association for information systems':"JAIS", 'management science':'MS', 'operational research':"OR",
     "information & management": "I&M", "decision support systems": "DSS", "european journal of information systems": "EJIS"}
 
-chromedriver_path = ""  # modify this if you need to use local chromedriver 
 
 '''
 crawl google scholar search results and save pdf if the file was avaliable.
@@ -29,6 +31,7 @@ requirements:
     - selenium  `pip install selenium`
     - webdriver `brew install webdriver`
     - requests `pip install requests`
+    - openpyxl `pip install openpyxl`
 
 will create local file folders based on keywords and journal as following:
 $ tree test_googlecrawer -d
@@ -60,23 +63,23 @@ def downloadPdf(output, link):
 def parse(infobox):
     infobox = infobox.lower().split("-")
     infobox = [c.strip() for c in infobox]
-    author = infobox[0].split(",")[0].split(" ")[1]  # extract last name 
-    journal = infobox[1].split(",")[0] # extract journal, "..." may be init, otherwise, we need to get bibtex diredctly, much more time-consuming 
-    year = infobox[1].split(",")[1].strip()  # extract year 
+    author = infobox[0].split(",")[0].split(" ")[1]  # extract last name
+    journal = infobox[1].split(",")[0] # extract journal, "..." may be init, otherwise, we need to get bibtex diredctly, much more time-consuming
+    year = infobox[1].split(",")[1].strip()  # extract year
     return author, journal, year
 
 class Article:
     def __init__(self, keywords, target_journal, folder):
         self.keywords = keywords   # search keywords
-        self.target_journal = target_journal  # searched journal 
-        self.output_folder = folder   # output folder 
+        self.target_journal = target_journal  # searched journal
+        self.output_folder = folder   # output folder
         self.createFolder()
         self.total_articles = {}
 
     def createFolder(self):
         self.output_fpath = "/".join([self.output_folder, self.keywords, self.target_journal])
         if not os.path.exists(self.output_fpath):
-            os.makedirs(self.output_fpath)  # creaet output folder if there is not one. 
+            os.makedirs(self.output_fpath)  # creaet output folder if there is not one.
             print('creating folder {0}'.format(self.output_fpath))
 
     def getInfo(self, article, driver):
@@ -86,7 +89,7 @@ class Article:
         default['title'] = re.sub("pdf\ ", "", default['title'])
         infobox = article.find_element_by_class_name("gs_a").text
         default['author'], default['journal'], default['year'] = parse(infobox)
-        default['citation'] = article.find_element_by_class_name("gs_or_cit gs_nph").text.split(" ")[-1]
+        default['citation'] = article.find_element_by_css_selector("div[class=gs_fl]").find_element_by_css_selector("a[href^='/scholar?cites']").text.split(" ")[-1]
         return default
 
     def getPdf(self, article, driver):
@@ -154,7 +157,7 @@ def run(keywords, journals, recursive = 6):
             time.sleep(2)
             for n in range(recursive):
                 driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                elements = driver.find_elements_by_css_selector("div[class=gs_r gs_or gs_scl]")  #find article boxs
+                elements = driver.find_elements_by_css_selector("div[class=gs_r\ gs_or\ gs_scl]")  #find article boxs
                 for e in elements:
                     try:
                         articles.fit(e, driver, cnt)
@@ -162,14 +165,19 @@ def run(keywords, journals, recursive = 6):
                         print("page {} number {} parse error!".format(n, cnt))
                     cnt += 1
                 try:
-                    driver.find_element_by_css_selector("span[class=gs_ico gs_ico_nav_next]").click()
+                    driver.find_element_by_css_selector("span[class=gs_ico\ gs_ico_nav_next]").click()
                     time.sleep(5)
                 except:
                     pass
             log = pd.DataFrame(articles.total_articles).T  # generate log files
             now = datetime.datetime.now()
-            log.to_excel(articles.output_fpath+"/"+"logfile_{}.txt".format(now.strftime("%m-%d-%Y")))
+            log.to_excel(articles.output_fpath+"/"+"logfile_{}.xlsx".format(now.strftime("%m-%d-%Y")))
     driver.quit()
 
 if __name__ == '__main__':
+    config = json.load(open(sys.argv[1]))  # read config
+    keywords = config['keywords']
+    journals = config['journals']
+    fpath = config['fpath']
+    chromedriver_path = config['chromedriver_path']
     run(keywords, journals, recursive=6)

@@ -1,0 +1,23 @@
+{
+    "keywords":
+    [
+        "wikipedia",
+        "online communities"
+    ],
+    "journals":
+    [
+        "information systems research",
+        "mis quarterly",
+        "journal of management information systems",
+        "journal of the association for information systems",
+        "management science",
+        "operational research",
+        "information & management",
+        "decision support systems",
+        "european journal of information systems"
+    ],
+    "fpath":
+        "/Users/Nico/test/test_googlecrawer2",
+    "chromedriver_path":
+    ""
+}
