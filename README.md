@@ -3,6 +3,7 @@ This is a short python program I wrote that try to search, format, and download 
 
 ## Requirements
 It has following requirements:
+
     - selenium  `pip install selenium`
     - webdriver `brew install webdriver`
     - requests `pip install requests`
