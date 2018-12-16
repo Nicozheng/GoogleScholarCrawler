@@ -37,6 +37,9 @@ test_googlecrawer
 In each folder, there is an excel log file recorded detailed search results (author, title, journal, year and whether pdf is avaliable).
 There will also be all the pdf files that are publicly accessible in Google Scholar.
 
+Here is how the log file will look like:
+![log file sample]("log_file_sample.png")
+
 The pdf files will be renamed as:
 `author-year-title-journal.pdf`
 
