@@ -55,7 +55,8 @@ def downloadPdf(output, link):
     '''
     write pdf file based on link address.
     '''
-    response = requests.get(link)
+    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
+    response = requests.get(link, headers=headers)
     with open(output, 'wb') as f:
         f.write(response.content)
 
@@ -85,7 +86,7 @@ class Article:
     def getInfo(self, article, driver):
         default = {"title": "NA", "author": "NA", "journal": "NA", "year":"NA", "log": "NA", "citation":"NA"}
         default['title'] = article.find_element_by_class_name("gs_rt").text.lower()
-        default['title'] = re.sub("[^a-z0-9 ]", "", default['title'])
+        default['title'] = re.sub("[^a-z0-9\ \-\:]", "", default['title'])
         default['title'] = re.sub("pdf\ ", "", default['title'])
         infobox = article.find_element_by_class_name("gs_a").text
         default['author'], default['journal'], default['year'] = parse(infobox)
@@ -126,10 +127,10 @@ class Article:
             self.info = default
         if self.info is not default:
             self.pdf = self.getPdf(article, driver)
+            self.filename = self.getFileName()
+            self.info['filename'] = self.filename
+            output = self.output_fpath + "/" + self.filename
             if self.pdf is not "NA":
-                self.filename = self.getFileName()
-                self.info['filename'] = self.filename
-                output = self.output_fpath + "/" + self.filename
                 try:
                     downloadPdf(output, self.pdf)
                 except:
