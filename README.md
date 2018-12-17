@@ -1,5 +1,5 @@
 # Google Scholar Crawler
-This is a short python program I wrote that try to search, format, and download paper form google scholar.
+This is a short python program that search, format, and download paper form google scholar.
 
 ## Requirements
 It has following requirements:
