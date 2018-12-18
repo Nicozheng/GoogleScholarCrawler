@@ -5,7 +5,7 @@ This is a short python program that search, format, and download paper form goog
 It has following requirements:
 
     - selenium  `pip install selenium`
-    - webdriver `brew install webdriver`
+    - webdriver `brew install selenium-server-standalone`
     - requests `pip install requests`
     - openpyxl `pip install openpyxl`
 
